@@ -10,7 +10,7 @@ from transformer.layers.base.embedding import Embedding
 from transformer.layers.base.dropout import Dropout
 from transformer.layers.combined.decoder_layer import DecoderLayer
 from transformer.activations import Identity, Softmax
-from transformer.layers.combined.positional_encoding import PositionalEncoding
+from transformer.layers.combined.rope_encoding import RotaryPositionalEncoding
 
 
 
@@ -19,7 +19,7 @@ class Decoder:
     def __init__(self, trg_vocab_size, heads_num, layers_num, d_model, d_ff, dropout, max_length = 5000, data_type = np.float32):
 
         self.token_embedding    = Embedding(trg_vocab_size, d_model, data_type)
-        self.position_embedding = PositionalEncoding(max_length, d_model, dropout, data_type)
+        self.position_embedding = RotaryPositionalEncoding(d_model, max_length, data_type)
 
         self.layers = []
         for _ in range(layers_num):

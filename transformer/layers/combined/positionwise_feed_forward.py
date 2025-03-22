@@ -1,15 +1,20 @@
+try:
+    import cupy as np
+    is_cupy_available = True
+except:
+    import numpy as np
+    is_cupy_available = False
+
 from transformer.activations import ReLU
 from transformer.layers.base.dense import Dense
 from transformer.layers.base.dropout import Dropout
 
 class PositionwiseFeedforward():
-    def __init__(self, d_model = 512, d_ff = 2048,  dropout = 0.1):
-        
-        self.fc_1 = Dense(inputs_num = d_model, units_num = d_ff)
+    def __init__(self, d_model = 512, d_ff = 2048, dropout = 0.1, data_type = np.float32):
+        self.fc_1 = Dense(inputs_num = d_model, units_num = d_ff, data_type = data_type)
         self.activation = ReLU()
-        self.fc_2 = Dense(inputs_num = d_ff, units_num = d_model)
-
-        self.dropout = Dropout(dropout)
+        self.fc_2 = Dense(inputs_num = d_ff, units_num = d_model, data_type = data_type)
+        self.dropout = Dropout(dropout, data_type)
 
     def forward(self, X, training = True):
         
