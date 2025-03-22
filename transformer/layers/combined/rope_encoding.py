@@ -43,22 +43,24 @@ class RotaryPositionalEncoding():
     def apply_rotary_pos_emb(self, x):
         # x shape: [batch_size, seq_len, d_model]
         seq_len = x.shape[1]
+        batch_size = x.shape[0]
         
         cos = self.cos[:seq_len]  # [seq_len, d_model/2]
         sin = self.sin[:seq_len]  # [seq_len, d_model/2]
         
-        # Reshape for broadcasting
-        cos = cos[np.newaxis, :, :]  # [1, seq_len, d_model/2]
-        sin = sin[np.newaxis, :, :]  # [1, seq_len, d_model/2]
+        # Reshape for proper broadcasting
+        x_reshaped = x.reshape(batch_size, seq_len, -1, 2)  # [batch_size, seq_len, d_model/2, 2]
         
-        # Apply rotation using einsum
-        x_reshaped = x.reshape(*x.shape[:-1], -1, 2)
-        x_rope = np.concatenate([
-            x_reshaped[..., 0::2] * cos - x_reshaped[..., 1::2] * sin,
-            x_reshaped[..., 1::2] * cos + x_reshaped[..., 0::2] * sin
-        ], axis=-1)
+        # Expand dimensions for broadcasting
+        cos = cos[:, :, np.newaxis]  # [seq_len, d_model/2, 1]
+        sin = sin[:, :, np.newaxis]  # [seq_len, d_model/2, 1]
         
-        return x_rope
+        # Apply rotary embeddings
+        x_rot = np.empty_like(x_reshaped)
+        x_rot[..., 0] = x_reshaped[..., 0] * cos - x_reshaped[..., 1] * sin  # Real part
+        x_rot[..., 1] = x_reshaped[..., 0] * sin + x_reshaped[..., 1] * cos  # Imaginary part
+        
+        return x_rot.reshape(x.shape)
 
     def forward(self, x):
         """Apply rotary position encoding to input tensor.
